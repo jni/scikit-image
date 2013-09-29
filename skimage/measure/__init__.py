@@ -11,6 +11,7 @@ from .profile import profile_line
 from .fit import LineModel, LineModelND, CircleModel, EllipseModel, ransac
 from .block import block_reduce
 from ._label import label
+from .set_metrics import hausdorff_distance, hausdorff_distance_region
 
 
 __all__ = ['find_contours',
