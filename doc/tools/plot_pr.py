@@ -119,10 +119,11 @@ for l in labels:
     l.set_rotation(40)
     l.set_size(14)
 
+date_offset = 10 * 24 * 60 * 60 # 10 days
 for version, date in releases.items():
     date = seconds_from_epoch([date])[0]
     plt.axvline(date, color='orange', label=version, lw=2)
-    plt.text(date, n.max() * 0.9, version, color='orange', rotation=90,
+    plt.text(date + date_offset, n.max() * 0.93, version, color='orange',
              fontsize=16)
 
 plt.title('Pull request activity').set_y(1.05)
