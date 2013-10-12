@@ -112,13 +112,12 @@ n, bins, _ = plt.hist(dates_f, bins=bins)
 
 ax = plt.gca()
 ax.xaxis.set_major_formatter(FuncFormatter(date_formatter))
-ax.set_xticks(bins[:-1])
+ax.set_xticks(bins[2:-1:3])
 
 labels = ax.get_xticklabels()
 for l in labels:
     l.set_rotation(40)
-    l.set_size(10)
-
+    l.set_size(14)
 
 for version, date in releases.items():
     date = seconds_from_epoch([date])[0]
