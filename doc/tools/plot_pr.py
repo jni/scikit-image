@@ -136,7 +136,8 @@ cumulative = np.cumsum(n)
 cumulative += len(dates) - cumulative[-1]
 
 ax2 = plt.twinx()
-ax2.plot(bins[:-1], cumulative, 'purple', linewidth=2)
+bin_centers = (bins[:-1] + bins[1:]) / 2
+ax2.plot(bin_centers, cumulative, 'purple', linewidth=2)
 ax2.set_ylabel('Total PRs', color='purple')
 
 plt.savefig('PRs.png')
