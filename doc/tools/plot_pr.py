@@ -121,7 +121,7 @@ for l in labels:
 
 for version, date in releases.items():
     date = seconds_from_epoch([date])[0]
-    plt.axvline(date, color='r', label=version)
+    plt.axvline(date, color='orange', label=version, lw=2)
     plt.text(date, n.max() * 0.9, version, color='orange', rotation=90,
              fontsize=16)
 
