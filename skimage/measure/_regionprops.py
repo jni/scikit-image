@@ -323,8 +323,6 @@ class _RegionProperties(MutableMapping):
         if value is not None:
             return value
         else:  # backwards compatability
-            warnings.warn('Usage of deprecated property name.',
-                          category=DeprecationWarning)
             return getattr(self, PROPS[key])
 
 
@@ -495,12 +493,6 @@ def regionprops(label_image, properties=None,
 
     if label_image.ndim != 2:
         raise TypeError('Only 2-D images supported.')
-
-    if properties is not None:
-        warnings.warn('The ``properties`` argument is deprecated and is '
-                      'not needed any more as properties are '
-                      'determined dynamically.',
-                      category=DeprecationWarning)
 
     regions = []
 
