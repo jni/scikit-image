@@ -1,8 +1,8 @@
 # coding: utf-8
-import warnings
 from math import sqrt, atan2, pi as PI
 import numpy as np
 from scipy import ndimage
+from scipy.stats.mstats import mquantiles
 
 from collections import MutableMapping
 
@@ -38,6 +38,7 @@ PROPS = {
     'Label': 'label',
     'MajorAxisLength': 'major_axis_length',
     'MaxIntensity': 'max_intensity',
+    'MedianIntensity': 'median_intensity',
     'MeanIntensity': 'mean_intensity',
     'MinIntensity': 'min_intensity',
     'MinorAxisLength': 'minor_axis_length',
@@ -47,6 +48,7 @@ PROPS = {
     'Perimeter': 'perimeter',
 #    'PixelIdxList',
 #    'PixelList',
+    'Quantiles': 'quantiles',
     'Solidity': 'solidity',
 #    'SubarrayIdx'
     'WeightedCentralMoments': 'weighted_moments_central',
@@ -224,6 +226,10 @@ class _RegionProperties(MutableMapping):
         return np.mean(self.intensity_image[self.image])
 
     @_cached_property
+    def median_intensity(self):
+        return np.median(self.intensity_image[self.image])
+
+    @_cached_property
     def min_intensity(self):
         return np.min(self.intensity_image[self.image])
 
@@ -269,6 +275,11 @@ class _RegionProperties(MutableMapping):
     @_cached_property
     def perimeter(self):
         return perimeter(self.image, 4)
+
+    @_cached_property
+    def quantiles(self):
+        return mquantiles(self.intensity_image[self.image],
+                          [0.05, 0.25, 0.5, 0.75, 0.95]).ravel()
 
     @_cached_property
     def solidity(self):
