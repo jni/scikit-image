@@ -67,8 +67,12 @@ script:
     - "echo 'backend.qt4 : PyQt4' >> $HOME/.matplotlib/matplotlibrc"
 
     # Run all tests
-    - nosetests --exe -v --with-doctest --with-cov --cov skimage --cov-config .coveragerc skimage
-
+    - if [[ $PYVER == '3.x' ]]; then
+    -   nosetests --exe -v --with-doctest --with-cov --cov skimage --cov-config .coveragerc skimage
+    - fi
+    - if [[ $PYVER == '2.x' ]]; then
+    -   nosetests --exe -v --with-doctest skimage
+    - fi
     # Run all doc examples
     - export PYTHONPATH=$(pwd):$PYTHONPATH
     - for f in doc/examples/*.py; do $PYTHONX "$f"; if [ $? -ne 0 ]; then exit 1; fi done
