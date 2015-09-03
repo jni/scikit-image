@@ -126,9 +126,9 @@ class _RegionProperties(object):
         self._cache_active = cache_active
         self._ndim = label_image.ndim
 
-    @property
+    @_cached_property
     def area(self):
-        return self.image.sum()
+        return np.sum(self.image)
 
     @property
     def bbox(self):
