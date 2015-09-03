@@ -105,6 +105,16 @@ class _cached_property(object):
         return value
 
 
+def only2d(method):
+    def func2d(self, *args, **kwargs):
+        if self._ndim > 2:
+            raise NotImplementedError('Property %s is not implemented for '
+                                      '3D images' % method.__name__)
+        return method(self, *args, **kwargs)
+    func2d.__name__ = method.__name__
+    return func2d
+
+
 class _RegionProperties(object):
 
     def __init__(self, slice, label, label_image, intensity_image,
@@ -133,15 +143,13 @@ class _RegionProperties(object):
                                for i in range(self._ndim)]))
 
     @property
+    @only2d
     def convex_area(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         return np.sum(self.convex_image)
 
     @_cached_property
+    @only2d
     def convex_image(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         from ..morphology.convex_hull import convex_hull_image
         return convex_hull_image(self.image)
 
@@ -152,9 +160,8 @@ class _RegionProperties(object):
                           for i in range(self._ndim)]).T
 
     @property
+    @only2d
     def eccentricity(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         l1, l2 = self.inertia_tensor_eigvals
         if l1 == 0:
             return 0
@@ -194,9 +201,8 @@ class _RegionProperties(object):
         return self._label_image[self._slice] == self.label
 
     @_cached_property
+    @only2d
     def inertia_tensor(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         mu = self.moments_central
         a = mu[2, 0] / mu[0, 0]
         b = -mu[1, 1] / mu[0, 0]
@@ -204,9 +210,8 @@ class _RegionProperties(object):
         return np.array([[a, b], [b, c]])
 
     @_cached_property
+    @only2d
     def inertia_tensor_eigvals(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         a, b, b, c = self.inertia_tensor.flat
         # eigen values of inertia tensor
         l1 = (a + c) / 2 + sqrt(4 * b ** 2 + (a - c) ** 2) / 2
@@ -224,9 +229,8 @@ class _RegionProperties(object):
         return self.intensity_image.astype(np.double)
 
     @property
+    @only2d
     def local_centroid(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         m = self.moments
         row = m[0, 1] / m[0, 0]
         col = m[1, 0] / m[0, 0]
@@ -245,49 +249,42 @@ class _RegionProperties(object):
         return np.min(self.intensity_image[self.image])
 
     @property
+    @only2d
     def major_axis_length(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         l1, _ = self.inertia_tensor_eigvals
         return 4 * sqrt(l1)
 
     @property
+    @only2d
     def minor_axis_length(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         _, l2 = self.inertia_tensor_eigvals
         return 4 * sqrt(l2)
 
     @_cached_property
+    @only2d
     def moments(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         return _moments.moments(self.image.astype(np.uint8), 3)
 
     @_cached_property
+    @only2d
     def moments_central(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images') 
         row, col = self.local_centroid
         return _moments.moments_central(self.image.astype(np.uint8),
                                         row, col, 3)
 
     @property
+    @only2d
     def moments_hu(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         return _moments.moments_hu(self.moments_normalized)
 
     @_cached_property
+    @only2d
     def moments_normalized(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         return _moments.moments_normalized(self.moments_central, 3)
 
     @property
+    @only2d
     def orientation(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images') 
         a, b, b, c = self.inertia_tensor.flat
         b = -b
         if a - c == 0:
@@ -299,57 +296,49 @@ class _RegionProperties(object):
             return - 0.5 * atan2(2 * b, (a - c))
 
     @property
+    @only2d
     def perimeter(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         return perimeter(self.image, 4)
 
     @property
+    @only2d
     def solidity(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         return self.moments[0, 0] / np.sum(self.convex_image)
 
     @property
+    @only2d
     def weighted_centroid(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         row, col = self.weighted_local_centroid
         return row + self._slice[0].start, col + self._slice[1].start
 
     @property
+    @only2d
     def weighted_local_centroid(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images') 
         m = self.weighted_moments
         row = m[0, 1] / m[0, 0]
         col = m[1, 0] / m[0, 0]
         return row, col
 
     @_cached_property
+    @only2d
     def weighted_moments(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         return _moments.moments_central(self._intensity_image_double, 0, 0, 3)
 
     @_cached_property
+    @only2d
     def weighted_moments_central(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images') 
         row, col = self.weighted_local_centroid
         return _moments.moments_central(self._intensity_image_double,
                                         row, col, 3)
 
     @property
+    @only2d
     def weighted_moments_hu(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         return _moments.moments_hu(self.weighted_moments_normalized)
 
     @_cached_property
+    @only2d
     def weighted_moments_normalized(self):
-        if self._ndim > 2:
-            raise NotImplementedError('not implemented for 3D images')
         return _moments.moments_normalized(self.weighted_moments_central, 3)
 
     def __iter__(self):
