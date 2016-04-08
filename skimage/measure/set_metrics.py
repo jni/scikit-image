@@ -33,7 +33,7 @@ def hausdorff_distance(a, b):
     -------
     distance : float
         The Hausdorff distance between sets ``a`` and ``b``, using
-        Euclidian distance to calculate the distance between points in ``a``
+        Euclidean distance to calculate the distance between points in ``a``
         and ``b``.
 
     References
