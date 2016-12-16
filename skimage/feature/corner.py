@@ -227,6 +227,35 @@ def _image_orthogonal_matrix22_eigvals(M00, M01, M11):
     return l1, l2
 
 
+def _image_symmetric_matrix33_det(m00, m01, m02, m11, m12, m22):
+    return (m00 * (m11*m22 - m12*m12) +
+            m01 * (m02*m12 - m01*m22) +
+            m02 * (m01*m12 - m11*m02))
+
+
+def _image_symmetric_matrix33_eigvals(m00, m01, m02, m11, m12, m22):
+    # Adapted from https://en.wikipedia.org/wiki/Eigenvalue_algorithm
+    p1 = m01**2 + m02**2 + m12**2  # off-diagonal elements
+    q = (m00 + m11 + m22) / 3
+    p2 = (m00 - q)**2 + (m11 - q)**2 + (m22 - q)**2 + (2 * p1)
+    p = np.sqrt(p2 / 6)
+    pinv = 1 / p
+    b00, b01, b02, b11, b12, b22 = (pinv * m for m in
+                                    (m00, m01, m02, m11, m12, m22))
+    b00, b11, b22 = (b - pinv * q for b in (b00, b11, b22))
+    r = _image_symmetric_matrix33_det(b00, b01, b02, b11, b12, b22) / 2
+
+    # In exact arithmetic for a symmetric matrix  -1 <= r <= 1
+    # but computation error can leave it slightly outside this range.
+    r = np.clip(r, -1, 1)
+    phi = np.arccos(r) / 3
+    # the eigenvalues satisfy eig3 <= eig2 <= eig1
+    eig1 = q + 2 * p * np.cos(phi)
+    eig3 = q + 2 * p * np.cos(phi + (2 * np.pi / 3))
+    eig2 = 3 * q - eig1 - eig3  # since trace(A) = eig1 + eig2 + eig3
+    return eig1, eig2, eig3
+
+
 def structure_tensor_eigvals(Axx, Axy, Ayy):
     """Compute Eigen values of structure tensor.
 
