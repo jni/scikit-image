@@ -43,8 +43,10 @@ def _compute_derivatives(image, mode='constant', cval=0):
     return imx, imy
 
 
-def structure_tensor(image, sigma=1, mode='constant', cval=0):
-    """Compute structure tensor using sum of squared differences.
+def _structure_tensor_old_xy(image, sigma=1, mode='constant', cval=0):
+    """DEPRECATED: Compute structure tensor using sum of squared differences.
+
+    This function has been replaced by row-column order in `structure_tensor`.
 
     The structure tensor A is defined as::
 
@@ -66,6 +68,7 @@ def structure_tensor(image, sigma=1, mode='constant', cval=0):
     cval : float, optional
         Used in conjunction with mode 'constant', the value outside
         the image boundaries.
+    order : {'rc', 'xy'}, optional
 
     Returns
     -------
@@ -90,6 +93,91 @@ def structure_tensor(image, sigma=1, mode='constant', cval=0):
            [ 0.,  0.,  0.,  0.,  0.]])
 
     """
+    image = _prepare_grayscale_input_2D(image)
+
+    imx, imy = _compute_derivatives(image, mode=mode, cval=cval)
+
+    # structure tensor
+    Axx = ndi.gaussian_filter(imx * imx, sigma, mode=mode, cval=cval)
+    Axy = ndi.gaussian_filter(imx * imy, sigma, mode=mode, cval=cval)
+    Ayy = ndi.gaussian_filter(imy * imy, sigma, mode=mode, cval=cval)
+
+    return Axx, Axy, Ayy
+
+
+def structure_tensor(image, sigma=1, mode='constant', cval=0, order=None):
+    """Compute structure tensor using sum of squared differences.
+
+    The 2D structure tensor A is defined as::
+
+        A = [Arr Arc]
+            [Arc Acc]
+
+    where Ad1d2 is the product of the gradient along axis d1 and the gradient
+    along axis d2.
+
+    In versions prior to 0.14, we only supported 2D images and the axis order
+    was x (horizontal, or columns) and y (vertical, or rows). To better follow
+    our axis conventions, we now recommend using rc order.
+
+    The 3D structure tensor is::
+
+        A = [App Apr Apc]
+            [Apr Arr Arc]
+            [Apc Arc Acc]
+
+    In versions prior to 0.14, the gradient was approximated by using a Sobel
+    filter followed by a Gaussian filter on the product. From 0.14 onwards,
+    we approximate it by a Gaussian filter followed by ``np.gradient``.
+
+    Parameters
+    ----------
+    image : ndarray
+        Input image.
+    sigma : float, optional
+        Standard deviation used for the Gaussian kernel, which is used as a
+        weighting function for the local summation of squared differences.
+    mode : {'constant', 'reflect', 'wrap', 'nearest', 'mirror'}, optional
+        How to handle values outside the image borders.
+    cval : float, optional
+        Used in conjunction with mode 'constant', the value outside
+        the image boundaries.
+    order : {'rc', 'xy'}, optional
+        For
+
+    Returns
+    -------
+    Axx : ndarray
+        Element of the structure tensor for each pixel in the input image.
+    Axy : ndarray
+        Element of the structure tensor for each pixel in the input image.
+    Ayy : ndarray
+        Element of the structure tensor for each pixel in the input image.
+
+    Examples
+    --------
+    >>> from skimage.feature import structure_tensor
+    >>> square = np.zeros((5, 5))
+    >>> square[2, 2] = 1
+    >>> Axx, Axy, Ayy = structure_tensor(square, sigma=0.1)
+    >>> Axx
+    array([[ 0.,  0.,  0.,  0.,  0.],
+           [ 0.,  1.,  0.,  1.,  0.],
+           [ 0.,  4.,  0.,  4.,  0.],
+           [ 0.,  1.,  0.,  1.,  0.],
+           [ 0.,  0.,  0.,  0.,  0.]])
+
+    """
+    if order is None:
+        if image.ndim == 2:
+            # The legacy 2D code followed (x, y) convention, so we swap the
+            # axes order to maintain compatibility with old code
+            warn('deprecation warning: the default order of the hessian matrix values '
+                 'will be "row-column" instead of "xy" starting in skimage version 0.15. '
+                 'Use order="rc" or order="xy" to set this explicitly')
+            order = 'xy'
+        else:
+            order = 'rc'
 
     image = _prepare_grayscale_input_2D(image)
 
