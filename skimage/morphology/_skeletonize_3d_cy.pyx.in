@@ -80,6 +80,10 @@ def _compute_thin_image(pixel_type[:, :, ::1] img not None):
 
         pixel_type neighb[27]
 
+        # rebind a global name to avoid lookup. The table is filled in
+        # at import time.
+        int[::1] Euler_LUT = LUT
+
     # loop over the six directions in this order (for consistency with ImageJ)
     borders[:] = [4, 3, 2, 1, 5, 6]
 
@@ -109,7 +113,8 @@ def _compute_thin_image(pixel_type[:, :, ::1] img not None):
                     r = point.r
                     c = point.c
                     get_neighborhood(img, p, r, c, neighb)
-                    if is_simple_point(neighb):
+                    if (is_simple_point(neighb)
+                            and is_Euler_invariant(neighb, Euler_LUT)):
                         img[p, r, c] = 0
                         no_change = False
 

@@ -186,3 +186,15 @@ def test_3d_vs_fiji():
     img_s = skeletonize(img)
     img_f = io.imread(os.path.join(data_dir, "_blobs_3d_fiji_skeleton.tif"))
     assert_equal(img_s, img_f)
+
+
+def test_even_thickness_line():
+    image = np.zeros((100, 100, 100), np.uint8)
+    image[50:54, 50:54, :] = 1
+
+    skeleton = skeletonize_3d(image)
+    assert np.sum(skeleton) > 0
+    print(np.sum(skeleton))  # = 1, currently
+    image[50:55, 50:55, :] = 1
+    skeleton2 = skeletonize_3d(image)
+    print(np.sum(skeleton2))  # = 96, currently
