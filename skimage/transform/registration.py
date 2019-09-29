@@ -1,4 +1,6 @@
 import numpy as np
+from gputools.transforms import affine
+from gputools import OCLArray, OCLImage
 from scipy import ndimage as ndi
 from scipy.optimize import minimize
 
@@ -81,7 +83,9 @@ def cost_nmi(image0, image1, *, bins=100):
 
 def register_affine(reference, target, *, cost=cost_nmi, minimum_size=8,
                     multichannel=False, inverse=True,
-                    level_callback=None, method='Powell', **kwargs):
+                    level_callback=None, method='Powell',
+                    use_gputools=False,
+                    **kwargs):
     """Find a transformation matrix to register a target image to a reference.
 
     Parameters
@@ -155,23 +159,47 @@ def register_affine(reference, target, *, cost=cost_nmi, minimum_size=8,
     parameter_vector = _matrix_to_parameter_vector(np.identity(ndim + 1))
 
     for ref, tgt in image_pairs:
+        if use_gputools:
+            if ndim == 2:
+                ref = ref[np.newaxis, ...]
+                tgt = tgt[np.newaxis, ...]
+            tgt_gpu = OCLImage.from_array(tgt.astype(np.float32))
+            if not multichannel:
+                result_gpu = OCLArray.empty(tgt.shape, np.float32)
+            else:
+                result_gpu = OCLArray.empty(tgt.shape[:-1], np.float32)
         def _cost(param):
             transformation = _parameter_vector_to_matrix(param, ndim)
+            if use_gputools and ndim == 2:
+                transformation2 = np.identity((ndim + 2))
+                transformation2[1:, 1:] = transformation[:, :]
             if not multichannel:
-                transformed = ndi.affine_transform(tgt, transformation,
-                                                   order=1)
+                if use_gputools:
+                    transformed = affine(tgt_gpu, transformation2,
+                                         interpolation='linear',
+                                         res_g=result_gpu).get()
+                else:
+                    transformed = ndi.affine_transform(tgt, transformation,
+                                                       order=1)
             else:
                 transformed = np.zeros_like(tgt)
                 for ch in range(tgt.shape[-1]):
-                    ndi.affine_transform(tgt[..., ch], transformation,
-                                         order=1, output=transformed[..., ch])
+                    if use_gputools:
+                        transformed[..., ch] = affine(tgt[..., ch],
+                                                      transformation,
+                                                      interpolation='linear',
+                                                      res_g=result_gpu).get()
+                    else:
+                        ndi.affine_transform(tgt[..., ch], transformation,
+                                             order=1,
+                                             output=transformed[..., ch])
             return cost(ref, transformed)
 
         result = minimize(_cost, x0=parameter_vector, method=method, **kwargs)
         parameter_vector = result.x
         if level_callback is not None:
             level_callback(
-                (tgt,
+                (np.squeeze(tgt),
                  _parameter_vector_to_matrix(parameter_vector, ndim),
                  result.fun)
             )

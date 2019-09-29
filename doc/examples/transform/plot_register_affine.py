@@ -18,6 +18,7 @@ reference space.
         2017. isbn: 1491922877, 9781491922873.
 
 """
+import time
 
 import numpy as np
 from scipy import ndimage as ndi
@@ -41,7 +42,7 @@ matrix_transform = np.array([[c, -s, 0],
                              [s, c, 50],
                              [0, 0,  1]])
 
-image = astronaut()[..., 1]  # Just green channel
+image = astronaut()[..., 1].copy()  # Just green channel
 target = ndi.affine_transform(image, matrix_transform)
 
 ###############################################################################
@@ -57,8 +58,16 @@ target = ndi.affine_transform(image, matrix_transform)
 
 level_alignments = []
 
-register_matrix = register_affine(image, target,
-                                  level_callback=level_alignments.append)
+t0 = time.time()
+register_matrix = register_affine(image, target, use_gputools=True)
+t1 = time.time()
+_ = register_affine(image, target, use_gputools=False,
+                    level_callback=level_alignments.append)
+t2 = time.time()
+
+print('gpu time: ', t1 - t0)
+print('cpu time: ', t2 - t1)
+
 
 ###############################################################################
 # Once we have the matrix, it's easy to transform the target image to match
