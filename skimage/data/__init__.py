@@ -5,7 +5,7 @@ For more images, see
  - http://sipi.usc.edu/database/database.php
 
 """
-
+import sys
 import warnings
 from warnings import warn
 import numpy as np
@@ -86,11 +86,21 @@ image_fetcher = pooch.create(
     urls=registry_urls,
 )
 
-data_dir = osp.join(str(image_fetcher.abspath), 'data')
-
-os.makedirs(data_dir, exist_ok=True)
+_data_dir = osp.join(str(image_fetcher.abspath), 'data')
+os.makedirs(_data_dir, exist_ok=True)
 shutil.copy2(osp.join(skimage_distribution_dir, 'data', 'README.txt'),
-             osp.join(data_dir, 'README.txt'))
+             osp.join(_data_dir, 'README.txt'))
+
+if sys.version_info < (3, 7):
+    data_dir = _data_dir  # users on older Python must call download_all()
+
+
+def __getattr__(name):
+    if name == 'data_dir':
+        download_all()
+        return _data_dir
+    else:
+        raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
 def _has_hash(path, expected_hash):
@@ -125,7 +135,7 @@ def _fetch(data_filename):
         If scikit-image is unable to connect to the internet but the dataset
         has not been downloaded yet.
     """
-    resolved_path = osp.join(data_dir, '..', data_filename)
+    resolved_path = osp.join(_data_dir, '..', data_filename)
     expected_hash = registry[data_filename]
 
     # Case 1:
