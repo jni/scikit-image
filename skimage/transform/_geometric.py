@@ -3,7 +3,8 @@ import numpy as np
 from scipy import spatial
 import textwrap
 
-from .._shared.utils import get_bound_method_class, safe_as_int
+from .._shared.utils import (get_bound_method_class, safe_as_int,
+                             _to_ndimage_mode)
 
 
 def _affine_matrix_from_vector(v):
@@ -22,15 +23,6 @@ def _affine_matrix_from_vector(v):
         (part_matrix, np.eye(dimensionality + 1)[-1:]), axis=0
     )
     return matrix
-
-
-def _to_ndimage_mode(mode):
-    """Convert from `numpy.pad` mode name to the corresponding ndimage mode."""
-    mode_translation_dict = dict(edge='nearest', symmetric='reflect',
-                                 reflect='mirror')
-    if mode in mode_translation_dict:
-        mode = mode_translation_dict[mode]
-    return mode
 
 
 def _center_and_normalize_points(points):
